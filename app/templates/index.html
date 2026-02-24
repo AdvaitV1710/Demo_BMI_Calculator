@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BMI Calculator</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <main class="card">
+    <h1>BMI Calculator</h1>
+    <p>Enter your details to calculate BMI and ideal weight range.</p>
+
+    <form method="post" action="/calculate">
+      <label for="weight">Weight (kg)</label>
+      <input
+        id="weight"
+        name="weight"
+        type="number"
+        min="1"
+        step="0.1"
+        value="{{ weight }}"
+        required
+      />
+
+      <label for="height">Height (cm)</label>
+      <input
+        id="height"
+        name="height"
+        type="number"
+        min="1"
+        step="0.1"
+        value="{{ height }}"
+        required
+      />
+
+      <button type="submit">Calculate</button>
+    </form>
+
+    {% if error %}
+    <section class="message error">{{ error }}</section>
+    {% endif %}
+
+    {% if result %}
+    <section class="message success">
+      <p><strong>Your BMI:</strong> {{ result.bmi }}</p>
+      <p>
+        <strong>Ideal weight range:</strong>
+        {{ result.ideal_min }} kg to {{ result.ideal_max }} kg
+      </p>
+    </section>
+    {% endif %}
+  </main>
+</body>
+</html>

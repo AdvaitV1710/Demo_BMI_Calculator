@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BMI Calculator</title>
+  <style>
+    :root {
+      --bg: #f4f7fb;
+      --card: #ffffff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --accent: #0f766e;
+      --accent-hover: #0d5f59;
+      --border: #d1d5db;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      background: radial-gradient(circle at top, #e6fffb 0%, var(--bg) 50%, #eef2ff 100%);
+      color: var(--text);
+      padding: 24px;
+    }
+
+    .card {
+      width: 100%;
+      max-width: 420px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 24px;
+      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.08);
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: 1.5rem;
+    }
+
+    p {
+      margin: 0 0 20px;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    .field {
+      margin-bottom: 14px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: 600;
+      font-size: 0.92rem;
+    }
+
+    input {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 1rem;
+    }
+
+    button {
+      width: 100%;
+      margin-top: 8px;
+      background: var(--accent);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 11px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: var(--accent-hover);
+    }
+
+    .result {
+      margin-top: 18px;
+      padding: 12px;
+      border-radius: 8px;
+      background: #f0fdfa;
+      border: 1px solid #99f6e4;
+      font-size: 0.95rem;
+      line-height: 1.4;
+    }
+
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <h1>BMI Calculator</h1>
+    <p>Enter your weight and height to calculate your Body Mass Index.</p>
+
+    <form id="bmi-form" novalidate>
+      <div class="field">
+        <label for="weight">Weight (kg)</label>
+        <input id="weight" name="weight" type="number" min="1" step="0.1" required />
+      </div>
+
+      <div class="field">
+        <label for="height">Height (cm)</label>
+        <input id="height" name="height" type="number" min="1" step="0.1" required />
+      </div>
+
+      <button type="submit">Calculate BMI</button>
+    </form>
+
+    <section id="result" class="result hidden" aria-live="polite"></section>
+  </main>
+
+  <script>
+    const form = document.getElementById("bmi-form");
+    const resultBox = document.getElementById("result");
+
+    function getCategory(bmi) {
+      if (bmi < 18.5) return "Underweight";
+      if (bmi < 25) return "Normal weight";
+      if (bmi < 30) return "Overweight";
+      return "Obesity";
+    }
+
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+
+      const weight = parseFloat(form.weight.value);
+      const heightCm = parseFloat(form.height.value);
+
+      if (!Number.isFinite(weight) || !Number.isFinite(heightCm) || weight <= 0 || heightCm <= 0) {
+        resultBox.classList.remove("hidden");
+        resultBox.textContent = "Please enter valid positive numbers for both fields.";
+        return;
+      }
+
+      const heightM = heightCm / 100;
+      const bmi = weight / (heightM * heightM);
+      const category = getCategory(bmi);
+
+      resultBox.classList.remove("hidden");
+      resultBox.innerHTML = `Your BMI is <strong>${bmi.toFixed(1)}</strong> (${category}).`;
+    });
+  </script>
+</body>
+</html>
