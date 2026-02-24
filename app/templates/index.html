@@ -5,13 +5,22 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>BMI Calculator</title>
   <link rel="stylesheet" href="/static/style.css" />
+  <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
 </head>
 <body>
   <main class="card">
     <h1>BMI Calculator</h1>
     <p>Enter your details to calculate BMI and ideal weight range.</p>
 
-    <form method="post" action="/calculate">
+    <form
+      id="bmi-form"
+      method="post"
+      action="/calculate"
+      hx-post="/calculate"
+      hx-target="#result"
+      hx-swap="innerHTML"
+    >
       <label for="weight">Weight (kg)</label>
       <input
         id="weight"
@@ -21,6 +30,21 @@
         step="0.1"
         value="{{ weight }}"
         required
+      />
+
+      <input
+        id="weight-slider"
+        type="range"
+        min="30"
+        max="200"
+        step="0.1"
+        value="{{ weight }}"
+        aria-label="Weight slider"
+        hx-post="/calculate"
+        hx-target="#result"
+        hx-swap="innerHTML"
+        hx-include="#bmi-form"
+        hx-trigger="input delay:120ms"
       />
 
       <label for="height">Height (cm)</label>
@@ -37,19 +61,159 @@
       <button type="submit">Calculate</button>
     </form>
 
-    {% if error %}
-    <section class="message error">{{ error }}</section>
-    {% endif %}
-
-    {% if result %}
-    <section class="message success">
-      <p><strong>Your BMI:</strong> {{ result.bmi }}</p>
-      <p>
-        <strong>Ideal weight range:</strong>
-        {{ result.ideal_min }} kg to {{ result.ideal_max }} kg
-      </p>
-    </section>
-    {% endif %}
+    <div id="result">
+      {% include "partials/result.html" %}
+    </div>
   </main>
+
+  <script>
+    let bmiChart = null;
+
+    function syncWeightControls() {
+      const weightInput = document.getElementById("weight");
+      const weightSlider = document.getElementById("weight-slider");
+
+      if (!weightInput || !weightSlider) {
+        return;
+      }
+
+      weightSlider.addEventListener("input", () => {
+        weightInput.value = weightSlider.value;
+      });
+
+      weightInput.addEventListener("input", () => {
+        weightSlider.value = weightInput.value || weightSlider.value;
+      });
+    }
+
+    function renderBmiChart() {
+      const chartBox = document.querySelector("#result [data-bmi]");
+
+      if (!chartBox) {
+        if (bmiChart) {
+          bmiChart.destroy();
+          bmiChart = null;
+        }
+        return;
+      }
+
+      const bmi = parseFloat(chartBox.dataset.bmi);
+      const canvas = document.getElementById("bmi-chart");
+
+      if (!canvas || Number.isNaN(bmi)) {
+        return;
+      }
+
+      const markerX = Math.max(0, Math.min(25, bmi - 15));
+
+      if (bmiChart) {
+        bmiChart.destroy();
+      }
+
+      bmiChart = new Chart(canvas, {
+        data: {
+          labels: ["Scale"],
+          datasets: [
+            {
+              type: "bar",
+              label: "Underweight",
+              data: [3.5],
+              backgroundColor: "#fecaca",
+              borderWidth: 0,
+              stack: "bmi",
+              barThickness: 20,
+            },
+            {
+              type: "bar",
+              label: "Normal",
+              data: [6.4],
+              backgroundColor: "#86efac",
+              borderWidth: 0,
+              stack: "bmi",
+              barThickness: 20,
+            },
+            {
+              type: "bar",
+              label: "Overweight",
+              data: [5.0],
+              backgroundColor: "#fde68a",
+              borderWidth: 0,
+              stack: "bmi",
+              barThickness: 20,
+            },
+            {
+              type: "bar",
+              label: "Obesity",
+              data: [10.1],
+              backgroundColor: "#fca5a5",
+              borderWidth: 0,
+              stack: "bmi",
+              barThickness: 20,
+            },
+            {
+              type: "scatter",
+              label: "Your BMI",
+              data: [{ x: markerX, y: "Scale" }],
+              backgroundColor: "#111827",
+              borderColor: "#111827",
+              pointRadius: 7,
+              pointHoverRadius: 7,
+              pointStyle: "triangle",
+              rotation: 180,
+              order: 0,
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: (context) => {
+                  if (context.dataset.type === "scatter") {
+                    return `Your BMI: ${bmi.toFixed(1)}`;
+                  }
+                  return `${context.dataset.label}`;
+                },
+              },
+            },
+          },
+          indexAxis: "y",
+          scales: {
+            x: {
+              stacked: true,
+              min: 0,
+              max: 25,
+              title: {
+                display: true,
+                text: "BMI Scale (15 to 40)",
+              },
+              ticks: {
+                callback: (value) => (Number(value) + 15).toFixed(0),
+              },
+            },
+            y: {
+              stacked: true,
+              grid: { display: false },
+              ticks: { display: false },
+            },
+          },
+        },
+      });
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      syncWeightControls();
+      renderBmiChart();
+    });
+
+    document.body.addEventListener("htmx:afterSwap", (event) => {
+      if (event.detail.target && event.detail.target.id === "result") {
+        renderBmiChart();
+      }
+    });
+  </script>
 </body>
 </html>

@@ -29,7 +29,7 @@ body {
 
 .card {
   width: 100%;
-  max-width: 430px;
+  max-width: 500px;
   background: var(--card);
   border: 1px solid var(--border);
   border-radius: 14px;
@@ -61,6 +61,11 @@ input {
   font-size: 1rem;
 }
 
+input[type="range"] {
+  padding: 0;
+  margin: 8px 0 12px;
+}
+
 button {
   width: 100%;
   margin-top: 14px;
@@ -78,8 +83,11 @@ button:hover {
   background: var(--accent-hover);
 }
 
-.message {
+#result {
   margin-top: 16px;
+}
+
+.message {
   border: 1px solid;
   border-radius: 8px;
   padding: 12px;
@@ -103,4 +111,9 @@ button:hover {
   background: var(--err-bg);
   border-color: var(--err-border);
   color: #991b1b;
+}
+
+.chart-wrap {
+  margin-top: 12px;
+  height: 140px;
 }

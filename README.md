@@ -3,7 +3,7 @@
 This project includes:
 
 - A CLI BMI calculator (`bmi_calculator.py`)
-- A FastAPI web app with a frontend (`app/main.py`)
+- A FastAPI + HTMX web app with live updates and Chart.js visualization (`app/main.py`)
 
 ## Requirements
 
@@ -29,10 +29,12 @@ Open:
 
 - `http://127.0.0.1:8000`
 
-The page lets you enter weight (kg) and height (cm), then shows:
+## Web app behavior
 
-- BMI value
-- Ideal weight range for that height (based on BMI 18.5 to 24.9)
+- Form submits asynchronously with HTMX (no full page reload)
+- Only the result section updates
+- Weight slider triggers live recalculation while dragging
+- Chart.js renders a horizontal BMI scale (15 to 40) with a marker for the user's BMI
 
 ## Run the CLI version
 
