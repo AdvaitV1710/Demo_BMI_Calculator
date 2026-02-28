@@ -16,3 +16,14 @@ def ideal_weight_range(height_cm: float) -> tuple[float, float]:
     min_weight = HEALTHY_BMI_MIN * (height_m * height_m)
     max_weight = HEALTHY_BMI_MAX * (height_m * height_m)
     return min_weight, max_weight
+
+
+def bmi_category(bmi: float) -> str:
+    """Return BMI category based on standard ranges."""
+    if bmi < 18.5:
+        return "Underweight"
+    if bmi < 25:
+        return "Normal weight"
+    if bmi < 30:
+        return "Overweight"
+    return "Obesity"

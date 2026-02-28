@@ -3,7 +3,7 @@ from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
-from bmi_core import calculate_bmi, ideal_weight_range
+from bmi_core import bmi_category, calculate_bmi, ideal_weight_range
 
 app = FastAPI(title="BMI Calculator")
 
@@ -31,10 +31,12 @@ def build_result(
 
         bmi = calculate_bmi(weight_kg, height_cm)
         ideal_min, ideal_max = ideal_weight_range(height_cm)
+        category = bmi_category(bmi)
 
         return (
             {
                 "bmi": f"{bmi:.1f}",
+                "category": category,
                 "ideal_min": f"{ideal_min:.1f}",
                 "ideal_max": f"{ideal_max:.1f}",
             },

@@ -5,6 +5,7 @@
 {% if result %}
 <section class="message success" data-bmi="{{ result.bmi }}">
   <p><strong>Your BMI:</strong> {{ result.bmi }}</p>
+  <p><strong>Category:</strong> {{ result.category }}</p>
   <p>
     <strong>Ideal weight range:</strong>
     {{ result.ideal_min }} kg to {{ result.ideal_max }} kg

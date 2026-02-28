@@ -9,69 +9,126 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
 </head>
 <body>
-  <main class="card">
-    <h1>BMI Calculator</h1>
-    <p>Enter your details to calculate BMI and ideal weight range.</p>
+  <div class="layout">
+    <main class="card">
+      <h1>BMI Calculator</h1>
+      <p>Enter your details to calculate BMI and ideal weight range.</p>
 
-    <form
-      id="bmi-form"
-      method="post"
-      action="/calculate"
-      hx-post="/calculate"
-      hx-target="#result"
-      hx-swap="innerHTML"
-    >
-      <label for="weight">Weight (kg)</label>
-      <input
-        id="weight"
-        name="weight"
-        type="number"
-        min="1"
-        step="0.1"
-        value="{{ weight }}"
-        required
-      />
-
-      <input
-        id="weight-slider"
-        type="range"
-        min="30"
-        max="200"
-        step="0.1"
-        value="{{ weight }}"
-        aria-label="Weight slider"
+      <form
+        id="bmi-form"
+        method="post"
+        action="/calculate"
         hx-post="/calculate"
         hx-target="#result"
         hx-swap="innerHTML"
-        hx-include="#bmi-form"
-        hx-trigger="input delay:120ms"
-      />
-
-      <label for="height">Height</label>
-      <div class="height-row">
+      >
+        <label for="weight">Weight (kg)</label>
         <input
-          id="height"
-          name="height"
+          id="weight"
+          name="weight"
           type="number"
           min="1"
           step="0.1"
-          value="{{ height }}"
+          value="{{ weight }}"
           required
         />
-        <select id="height_unit" name="height_unit" aria-label="Height unit">
-          <option value="cm" {% if height_unit == "cm" %}selected{% endif %}>cm</option>
-          <option value="in" {% if height_unit == "in" %}selected{% endif %}>in</option>
-          <option value="ft" {% if height_unit == "ft" %}selected{% endif %}>ft</option>
-        </select>
+
+        <input
+          id="weight-slider"
+          type="range"
+          min="30"
+          max="200"
+          step="0.1"
+          value="{{ weight }}"
+          aria-label="Weight slider"
+          hx-post="/calculate"
+          hx-target="#result"
+          hx-swap="innerHTML"
+          hx-include="#bmi-form"
+          hx-trigger="input delay:120ms"
+        />
+
+        <label for="height">Height</label>
+        <div class="height-row">
+          <input
+            id="height"
+            name="height"
+            type="number"
+            min="1"
+            step="0.1"
+            value="{{ height }}"
+            required
+          />
+          <div class="unit-toggle" role="group" aria-label="Height unit">
+            <input
+              type="radio"
+              id="unit-cm"
+              name="height_unit"
+              value="cm"
+              {% if height_unit == "cm" %}checked{% endif %}
+              hx-post="/calculate"
+              hx-target="#result"
+              hx-swap="innerHTML"
+              hx-include="#bmi-form"
+              hx-trigger="change delay:120ms"
+            />
+            <label for="unit-cm">cm</label>
+            <input
+              type="radio"
+              id="unit-in"
+              name="height_unit"
+              value="in"
+              {% if height_unit == "in" %}checked{% endif %}
+              hx-post="/calculate"
+              hx-target="#result"
+              hx-swap="innerHTML"
+              hx-include="#bmi-form"
+              hx-trigger="change delay:120ms"
+            />
+            <label for="unit-in">in</label>
+            <input
+              type="radio"
+              id="unit-ft"
+              name="height_unit"
+              value="ft"
+              {% if height_unit == "ft" %}checked{% endif %}
+              hx-post="/calculate"
+              hx-target="#result"
+              hx-swap="innerHTML"
+              hx-include="#bmi-form"
+              hx-trigger="change delay:120ms"
+            />
+            <label for="unit-ft">ft</label>
+          </div>
+        </div>
+
+        <button type="submit">Calculate</button>
+      </form>
+
+      <div id="result">
+        {% include "partials/result.html" %}
       </div>
+    </main>
 
-      <button type="submit">Calculate</button>
-    </form>
-
-    <div id="result">
-      {% include "partials/result.html" %}
-    </div>
-  </main>
+    <aside class="converter">
+      <h2>Height Converter</h2>
+      <div class="converter-grid">
+        <div>
+          <label for="conv-cm">Centimeters</label>
+          <input id="conv-cm" type="number" min="0" step="0.1" />
+        </div>
+        <div>
+          <label for="conv-in">Inches</label>
+          <input id="conv-in" type="number" min="0" step="0.1" />
+        </div>
+        <div>
+          <label for="conv-ft">Feet</label>
+          <input id="conv-ft" type="number" min="0" step="0.01" />
+        </div>
+      </div>
+      <p class="converter-note">Enter a value in any box to convert instantly.</p>
+    </aside>
+  </div>
 
   <script>
     let bmiChart = null;
@@ -174,6 +231,7 @@
         options: {
           responsive: true,
           maintainAspectRatio: false,
+          devicePixelRatio: 2,
           plugins: {
             legend: { display: false },
             tooltip: {
@@ -211,9 +269,51 @@
       });
     }
 
+    function setupConverter() {
+      const cmInput = document.getElementById("conv-cm");
+      const inInput = document.getElementById("conv-in");
+      const ftInput = document.getElementById("conv-ft");
+
+      if (!cmInput || !inInput || !ftInput) {
+        return;
+      }
+
+      const updateFromCm = (value) => {
+        const cm = parseFloat(value);
+        if (Number.isNaN(cm)) {
+          return;
+        }
+        inInput.value = (cm / 2.54).toFixed(2);
+        ftInput.value = (cm / 30.48).toFixed(3);
+      };
+
+      const updateFromIn = (value) => {
+        const inches = parseFloat(value);
+        if (Number.isNaN(inches)) {
+          return;
+        }
+        cmInput.value = (inches * 2.54).toFixed(2);
+        ftInput.value = (inches / 12).toFixed(3);
+      };
+
+      const updateFromFt = (value) => {
+        const feet = parseFloat(value);
+        if (Number.isNaN(feet)) {
+          return;
+        }
+        cmInput.value = (feet * 30.48).toFixed(2);
+        inInput.value = (feet * 12).toFixed(2);
+      };
+
+      cmInput.addEventListener("input", (event) => updateFromCm(event.target.value));
+      inInput.addEventListener("input", (event) => updateFromIn(event.target.value));
+      ftInput.addEventListener("input", (event) => updateFromFt(event.target.value));
+    }
+
     document.addEventListener("DOMContentLoaded", () => {
       syncWeightControls();
       renderBmiChart();
+      setupConverter();
     });
 
     document.body.addEventListener("htmx:afterSwap", (event) => {
