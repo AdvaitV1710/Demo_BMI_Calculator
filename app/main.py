@@ -11,12 +11,22 @@ app.mount("/static", StaticFiles(directory="app/static"), name="static")
 templates = Jinja2Templates(directory="app/templates")
 
 
-def build_result(weight: str, height: str) -> tuple[dict | None, str | None]:
+def build_result(
+    weight: str, height: str, height_unit: str
+) -> tuple[dict | None, str | None]:
     """Build BMI result payload and validation message from form strings."""
     try:
         weight_kg = float(weight)
-        height_cm = float(height)
-        if weight_kg <= 0 or height_cm <= 0:
+        height_value = float(height)
+        if weight_kg <= 0 or height_value <= 0:
+            raise ValueError
+        if height_unit == "cm":
+            height_cm = height_value
+        elif height_unit == "in":
+            height_cm = height_value * 2.54
+        elif height_unit == "ft":
+            height_cm = height_value * 30.48
+        else:
             raise ValueError
 
         bmi = calculate_bmi(weight_kg, height_cm)
@@ -38,7 +48,8 @@ def build_result(weight: str, height: str) -> tuple[dict | None, str | None]:
 def home(request: Request):
     weight = "70"
     height = "170"
-    result, error = build_result(weight, height)
+    height_unit = "cm"
+    result, error = build_result(weight, height, height_unit)
 
     return templates.TemplateResponse(
         request,
@@ -48,18 +59,25 @@ def home(request: Request):
             "error": error,
             "weight": weight,
             "height": height,
+            "height_unit": height_unit,
         },
     )
 
 
 @app.post("/calculate", response_class=HTMLResponse)
-def calculate(request: Request, weight: str = Form(...), height: str = Form(...)):
-    result, error = build_result(weight, height)
+def calculate(
+    request: Request,
+    weight: str = Form(...),
+    height: str = Form(...),
+    height_unit: str = Form(...),
+):
+    result, error = build_result(weight, height, height_unit)
     context = {
         "result": result,
         "error": error,
         "weight": weight,
         "height": height,
+        "height_unit": height_unit,
     }
 
     # Return only the result fragment for HTMX async updates.

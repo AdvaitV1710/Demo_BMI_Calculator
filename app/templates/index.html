@@ -47,16 +47,23 @@
         hx-trigger="input delay:120ms"
       />
 
-      <label for="height">Height (cm)</label>
-      <input
-        id="height"
-        name="height"
-        type="number"
-        min="1"
-        step="0.1"
-        value="{{ height }}"
-        required
-      />
+      <label for="height">Height</label>
+      <div class="height-row">
+        <input
+          id="height"
+          name="height"
+          type="number"
+          min="1"
+          step="0.1"
+          value="{{ height }}"
+          required
+        />
+        <select id="height_unit" name="height_unit" aria-label="Height unit">
+          <option value="cm" {% if height_unit == "cm" %}selected{% endif %}>cm</option>
+          <option value="in" {% if height_unit == "in" %}selected{% endif %}>in</option>
+          <option value="ft" {% if height_unit == "ft" %}selected{% endif %}>ft</option>
+        </select>
+      </div>
 
       <button type="submit">Calculate</button>
     </form>

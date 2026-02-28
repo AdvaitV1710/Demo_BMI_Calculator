@@ -34,6 +34,7 @@ Open:
 - Form submits asynchronously with HTMX (no full page reload)
 - Only the result section updates
 - Weight slider triggers live recalculation while dragging
+- Height can be entered in `cm`, `in`, or `ft`
 - Chart.js renders a horizontal BMI scale (15 to 40) with a marker for the user's BMI
 
 ## Run the CLI version

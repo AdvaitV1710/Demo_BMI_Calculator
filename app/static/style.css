@@ -61,9 +61,23 @@ input {
   font-size: 1rem;
 }
 
+select {
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 1rem;
+  background: #fff;
+}
+
 input[type="range"] {
   padding: 0;
   margin: 8px 0 12px;
+}
+
+.height-row {
+  display: grid;
+  grid-template-columns: 1fr 90px;
+  gap: 10px;
 }
 
 button {
