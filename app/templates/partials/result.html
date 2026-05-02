@@ -11,7 +11,10 @@
     {{ result.ideal_min }} kg to {{ result.ideal_max }} kg
   </p>
   <div class="chart-wrap">
-    <canvas id="bmi-chart" aria-label="BMI chart" role="img"></canvas>
+    <canvas id="bmi-chart" aria-label="BMI scale visualization showing your position among weight categories" role="img" aria-describedby="chart-description"></canvas>
+    <div id="chart-description" class="sr-only">
+      BMI scale from 15 to 40. Categories: Underweight (15-18.5), Normal (18.5-25), Overweight (25-30), Obesity (30-40). Your BMI of {{ result.bmi }} is marked on the scale.
+    </div>
   </div>
 </section>
 {% endif %}

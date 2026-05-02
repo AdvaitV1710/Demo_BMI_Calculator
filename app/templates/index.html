@@ -6,7 +6,6 @@
   <title>BMI Calculator</title>
   <link rel="stylesheet" href="/static/style.css" />
   <script src="https://unpkg.com/htmx.org@1.9.12"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
 </head>
 <body>
   <div class="layout">
@@ -21,6 +20,7 @@
         hx-post="/calculate"
         hx-target="#result"
         hx-swap="innerHTML"
+        hx-indicator="#loading-indicator"
       >
         <label for="weight">Weight (kg)</label>
         <input
@@ -31,6 +31,11 @@
           step="0.1"
           value="{{ weight }}"
           required
+          hx-post="/calculate"
+          hx-target="#result"
+          hx-swap="innerHTML"
+          hx-include="#bmi-form"
+          hx-trigger="input delay:120ms"
         />
 
         <input
@@ -41,11 +46,6 @@
           step="0.1"
           value="{{ weight }}"
           aria-label="Weight slider"
-          hx-post="/calculate"
-          hx-target="#result"
-          hx-swap="innerHTML"
-          hx-include="#bmi-form"
-          hx-trigger="input delay:120ms"
         />
 
         <label for="height">Height</label>
@@ -58,6 +58,11 @@
             step="0.1"
             value="{{ height }}"
             required
+            hx-post="/calculate"
+            hx-target="#result"
+            hx-swap="innerHTML"
+            hx-include="#bmi-form"
+            hx-trigger="input delay:120ms"
           />
           <div class="unit-toggle" role="group" aria-label="Height unit">
             <input
@@ -66,11 +71,6 @@
               name="height_unit"
               value="cm"
               {% if height_unit == "cm" %}checked{% endif %}
-              hx-post="/calculate"
-              hx-target="#result"
-              hx-swap="innerHTML"
-              hx-include="#bmi-form"
-              hx-trigger="change delay:120ms"
             />
             <label for="unit-cm">cm</label>
             <input
@@ -79,11 +79,6 @@
               name="height_unit"
               value="in"
               {% if height_unit == "in" %}checked{% endif %}
-              hx-post="/calculate"
-              hx-target="#result"
-              hx-swap="innerHTML"
-              hx-include="#bmi-form"
-              hx-trigger="change delay:120ms"
             />
             <label for="unit-in">in</label>
             <input
@@ -92,46 +87,100 @@
               name="height_unit"
               value="ft"
               {% if height_unit == "ft" %}checked{% endif %}
-              hx-post="/calculate"
-              hx-target="#result"
-              hx-swap="innerHTML"
-              hx-include="#bmi-form"
-              hx-trigger="change delay:120ms"
             />
             <label for="unit-ft">ft</label>
           </div>
         </div>
 
+        <input
+          id="height-slider"
+          type="range"
+          min="100"
+          max="220"
+          step="0.1"
+          value="{{ height }}"
+          aria-label="Height slider"
+        />
+
         <button type="submit">Calculate</button>
       </form>
+
+      <div id="loading-indicator" class="htmx-indicator loading-spinner" style="display: none;">
+        <div class="spinner"></div>
+        <span>Calculating...</span>
+      </div>
 
       <div id="result">
         {% include "partials/result.html" %}
       </div>
-    </main>
 
-    <aside class="converter">
-      <h2>Height Converter</h2>
-      <div class="converter-grid">
-        <div>
-          <label for="conv-cm">Centimeters</label>
-          <input id="conv-cm" type="number" min="0" step="0.1" />
-        </div>
-        <div>
-          <label for="conv-in">Inches</label>
-          <input id="conv-in" type="number" min="0" step="0.1" />
-        </div>
-        <div>
-          <label for="conv-ft">Feet</label>
-          <input id="conv-ft" type="number" min="0" step="0.01" />
-        </div>
+      <div class="bmi-formula">
+        <h3>BMI formula</h3>
+        <p>Body Mass Index is calculated as:</p>
+        <p><strong>BMI = weight (kg) ÷ height (m)<sup>2</sup></strong></p>
       </div>
-      <p class="converter-note">Enter a value in any box to convert instantly.</p>
-    </aside>
+    </main>
   </div>
 
   <script>
     let bmiChart = null;
+
+    const heightRanges = {
+      cm: { min: 100, max: 220, step: 0.1 },
+      in: { min: 39.4, max: 86.6, step: 0.1 },
+      ft: { min: 3.3, max: 7.2, step: 0.01 },
+    };
+
+    let currentHeightUnit = null;
+
+    function convertHeight(value, fromUnit, toUnit) {
+      if (Number.isNaN(value)) {
+        return NaN;
+      }
+
+      if (fromUnit === toUnit) {
+        return value;
+      }
+
+      const conversions = {
+        cm: {
+          in: (v) => v / 2.54,
+          ft: (v) => v / 30.48,
+        },
+        in: {
+          cm: (v) => v * 2.54,
+          ft: (v) => v / 12,
+        },
+        ft: {
+          cm: (v) => v * 30.48,
+          in: (v) => v * 12,
+        },
+      };
+
+      return conversions[fromUnit]?.[toUnit]?.(value) ?? NaN;
+    }
+
+    function getActiveHeightUnit() {
+      const checked = document.querySelector('input[name="height_unit"]:checked');
+      return checked ? checked.value : "cm";
+    }
+
+    function updateHeightSlider(unit, heightValue) {
+      const heightSlider = document.getElementById("height-slider");
+      if (!heightSlider) {
+        return;
+      }
+
+      const range = heightRanges[unit];
+      heightSlider.min = range.min;
+      heightSlider.max = range.max;
+      heightSlider.step = range.step;
+
+      if (!Number.isNaN(heightValue)) {
+        const clamped = Math.max(range.min, Math.min(range.max, heightValue));
+        heightSlider.value = clamped;
+      }
+    }
 
     function syncWeightControls() {
       const weightInput = document.getElementById("weight");
@@ -143,10 +192,56 @@
 
       weightSlider.addEventListener("input", () => {
         weightInput.value = weightSlider.value;
+        weightInput.dispatchEvent(new Event("input", { bubbles: true }));
       });
 
       weightInput.addEventListener("input", () => {
         weightSlider.value = weightInput.value || weightSlider.value;
+      });
+    }
+
+    function setupHeightControls() {
+      const heightInput = document.getElementById("height");
+      const heightSlider = document.getElementById("height-slider");
+      const heightRadios = Array.from(document.querySelectorAll('input[name="height_unit"]'));
+
+      if (!heightInput || !heightSlider || heightRadios.length === 0) {
+        return;
+      }
+
+      currentHeightUnit = getActiveHeightUnit();
+      updateHeightSlider(currentHeightUnit, parseFloat(heightInput.value));
+
+      heightInput.addEventListener("input", () => {
+        if (!heightInput.value) {
+          return;
+        }
+        heightSlider.value = heightInput.value;
+      });
+
+      heightSlider.addEventListener("input", () => {
+        heightInput.value = heightSlider.value;
+        heightInput.dispatchEvent(new Event("input", { bubbles: true }));
+      });
+
+      heightRadios.forEach((radio) => {
+        radio.addEventListener("change", () => {
+          if (!radio.checked) {
+            return;
+          }
+
+          const newUnit = radio.value;
+          const heightValue = parseFloat(heightInput.value);
+          const convertedHeight = convertHeight(heightValue, currentHeightUnit, newUnit);
+
+          currentHeightUnit = newUnit;
+          updateHeightSlider(newUnit, convertedHeight);
+
+          if (!Number.isNaN(convertedHeight)) {
+            heightInput.value = convertedHeight.toFixed(2);
+            heightInput.dispatchEvent(new Event("input", { bubbles: true }));
+          }
+        });
       });
     }
 
@@ -168,6 +263,18 @@
         return;
       }
 
+      // Load Chart.js dynamically if not already loaded
+      if (typeof Chart === 'undefined') {
+        const script = document.createElement('script');
+        script.src = 'https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js';
+        script.onload = () => createChart(bmi, canvas);
+        document.head.appendChild(script);
+      } else {
+        createChart(bmi, canvas);
+      }
+    }
+
+    function createChart(bmi, canvas) {
       const markerX = Math.max(0, Math.min(25, bmi - 15));
 
       if (bmiChart) {
@@ -278,31 +385,48 @@
         return;
       }
 
+      let isUpdating = false;
+
       const updateFromCm = (value) => {
+        if (isUpdating) return;
+        isUpdating = true;
         const cm = parseFloat(value);
-        if (Number.isNaN(cm)) {
-          return;
+        if (Number.isNaN(cm) || value === "") {
+          inInput.value = "";
+          ftInput.value = "";
+        } else {
+          inInput.value = (cm / 2.54).toFixed(2);
+          ftInput.value = (cm / 30.48).toFixed(2);
         }
-        inInput.value = (cm / 2.54).toFixed(2);
-        ftInput.value = (cm / 30.48).toFixed(3);
+        isUpdating = false;
       };
 
       const updateFromIn = (value) => {
+        if (isUpdating) return;
+        isUpdating = true;
         const inches = parseFloat(value);
-        if (Number.isNaN(inches)) {
-          return;
+        if (Number.isNaN(inches) || value === "") {
+          cmInput.value = "";
+          ftInput.value = "";
+        } else {
+          cmInput.value = (inches * 2.54).toFixed(2);
+          ftInput.value = (inches / 12).toFixed(2);
         }
-        cmInput.value = (inches * 2.54).toFixed(2);
-        ftInput.value = (inches / 12).toFixed(3);
+        isUpdating = false;
       };
 
       const updateFromFt = (value) => {
+        if (isUpdating) return;
+        isUpdating = true;
         const feet = parseFloat(value);
-        if (Number.isNaN(feet)) {
-          return;
+        if (Number.isNaN(feet) || value === "") {
+          cmInput.value = "";
+          inInput.value = "";
+        } else {
+          cmInput.value = (feet * 30.48).toFixed(2);
+          inInput.value = (feet * 12).toFixed(2);
         }
-        cmInput.value = (feet * 30.48).toFixed(2);
-        inInput.value = (feet * 12).toFixed(2);
+        isUpdating = false;
       };
 
       cmInput.addEventListener("input", (event) => updateFromCm(event.target.value));
@@ -312,8 +436,8 @@
 
     document.addEventListener("DOMContentLoaded", () => {
       syncWeightControls();
+      setupHeightControls();
       renderBmiChart();
-      setupConverter();
     });
 
     document.body.addEventListener("htmx:afterSwap", (event) => {
